@@ -34,7 +34,6 @@
         {
           "name": "files",
           "accept": [
-            "*/*",
             "image/*",
             "application/pdf",
             ".pdf",
@@ -47,18 +46,6 @@
             ".7z",
             ".xlsx",
             ".docx"
-          ]
-        },
-        {
-          "name": "file",
-          "accept": [
-            "*/*",
-            "image/*",
-            "application/pdf",
-            ".pdf",
-            ".jpg",
-            ".jpeg",
-            ".png"
           ]
         }
       ]

@@ -707,50 +707,52 @@
       }
     }
 
-    // Sistem Multi-Saluran Pemuatan Berkas Berbagi
-    function initSharedData() {
-      // SALURAN 1 (0ms Latency): Periksa objek yang diinjeksikan langsung oleh Service Worker
-      if (window.__KYPO_INJECTED_SHARE__ && window.__KYPO_INJECTED_SHARE__.files && window.__KYPO_INJECTED_SHARE__.files.length > 0) {
-        var inj = window.__KYPO_INJECTED_SHARE__;
-        if (inj.title || inj.text) {
-          var uraianEl = document.getElementById('input-uraian');
-          if (uraianEl && !uraianEl.value) {
-            uraianEl.value = (inj.title || inj.text || '').trim();
+    // Sistem Pemuatan Berkas Berbagi dari Cache Storage PWA (Native Streaming)
+    var shareLoadRetries = 0;
+
+    async function initSharedData() {
+      // 1. Baca langsung dari Cache Storage 'kypo-shared-files' (Saluran tercepat & terandal)
+      if ('caches' in window) {
+        try {
+          var cache = await caches.open('kypo-shared-files');
+          var requests = await cache.keys();
+          if (requests && requests.length > 0) {
+            var filesFound = [];
+            for (var req of requests) {
+              var res = await cache.match(req);
+              if (!res) continue;
+              var blob = await res.blob();
+              var urlObj = new URL(req.url, window.location.href);
+              var fName = decodeURIComponent(urlObj.searchParams.get('name') || '') || res.headers.get('X-KYPO-Filename') || 'Lampiran.jpg';
+              var fType = decodeURIComponent(urlObj.searchParams.get('type') || '') || res.headers.get('Content-Type') || blob.type || 'application/octet-stream';
+              var fTitle = decodeURIComponent(res.headers.get('X-KYPO-Title') || '');
+              var fText = decodeURIComponent(res.headers.get('X-KYPO-Text') || '');
+
+              if (fTitle || fText) {
+                var uraianEl = document.getElementById('input-uraian');
+                if (uraianEl && !uraianEl.value) {
+                  uraianEl.value = (fTitle || fText).trim();
+                }
+              }
+
+              var fileObj = new File([blob], fName, { type: fType, lastModified: Date.now() });
+              filesFound.push(fileObj);
+            }
+
+            if (filesFound.length > 0) {
+              processFilesArray(filesFound);
+              return;
+            }
           }
+        } catch(eCache) {
+          console.warn('[KYPO Share] Gagal membaca Cache Storage:', eCache);
         }
-        processFilesArray(inj.files);
-        return;
       }
 
-      // SALURAN 2 (Cache API Instan): Periksa payload terbaru yang disimpan Service Worker
-      if ('caches' in window) {
-        caches.open('kypo-share-payload').then(function(c) {
-          return c.match('/__kypo_latest_share__.json');
-        }).then(function(res) {
-          if (res) return res.json();
-          return null;
-        }).then(function(data) {
-          if (data && data.files && data.files.length > 0 && (Date.now() - (data.timestamp || 0)) < 120000) {
-            if (data.title || data.text) {
-              var uraianEl = document.getElementById('input-uraian');
-              if (uraianEl && !uraianEl.value) {
-                uraianEl.value = (data.title || data.text || '').trim();
-              }
-            }
-            processFilesArray(data.files);
-            return;
-          }
-          // Jika belum ada di Cache API, lanjut ke IndexedDB
-          loadSharedFilesFromIndexedDB();
-        }).catch(function() {
-          loadSharedFilesFromIndexedDB();
-        });
-      } else {
-        loadSharedFilesFromIndexedDB();
-      }
+      // 2. Saluran Cadangan: IndexedDB
+      loadSharedFilesFromIndexedDB();
     }
 
-    // SALURAN 3: Muat Berkas yang Dishare dari IndexedDB dengan Polling Retry
     function loadSharedFilesFromIndexedDB() {
       var uraianEl = document.getElementById('input-uraian');
 
@@ -759,9 +761,9 @@
         req.onsuccess = function(ev) {
           var db = ev.target.result;
           if (!db.objectStoreNames.contains('shared_files')) {
-            if (loadRetries < 5) {
-              loadRetries++;
-              setTimeout(loadSharedFilesFromIndexedDB, 200);
+            if (shareLoadRetries < 6) {
+              shareLoadRetries++;
+              setTimeout(initSharedData, 250);
               return;
             }
             showEmptyFilesFallback();
@@ -779,27 +781,33 @@
                   uraianEl.value = (record.title || record.text || '').trim();
                 }
               }
-              processFilesArray(record.files);
-            } else if (loadRetries < 5) {
-              loadRetries++;
-              setTimeout(loadSharedFilesFromIndexedDB, 200);
+              // Jika data di IndexedDB berupa metadata berkas, coba re-polling dari Cache API
+              if (shareLoadRetries < 6) {
+                shareLoadRetries++;
+                setTimeout(initSharedData, 250);
+              } else {
+                showEmptyFilesFallback();
+              }
+            } else if (shareLoadRetries < 6) {
+              shareLoadRetries++;
+              setTimeout(initSharedData, 250);
             } else {
               showEmptyFilesFallback();
             }
           };
           getReq.onerror = function() {
-            if (loadRetries < 5) {
-              loadRetries++;
-              setTimeout(loadSharedFilesFromIndexedDB, 200);
+            if (shareLoadRetries < 6) {
+              shareLoadRetries++;
+              setTimeout(initSharedData, 250);
             } else {
               showEmptyFilesFallback();
             }
           };
         };
         req.onerror = function() {
-          if (loadRetries < 5) {
-            loadRetries++;
-            setTimeout(loadSharedFilesFromIndexedDB, 200);
+          if (shareLoadRetries < 6) {
+            shareLoadRetries++;
+            setTimeout(initSharedData, 250);
           } else {
             showEmptyFilesFallback();
           }
@@ -974,7 +982,7 @@
         if (overlay) overlay.classList.add('hidden');
 
         if (res && res.success) {
-          // Bersihkan cache IndexedDB setelah berhasil disimpan
+          // Bersihkan cache IndexedDB & Cache Storage setelah berhasil disimpan
           try {
             var req = indexedDB.open('kypo_share_db', 1);
             req.onsuccess = function(ev) {
@@ -985,6 +993,9 @@
               }
             };
           } catch(eDel) {}
+          if ('caches' in window) {
+            caches.delete('kypo-shared-files').catch(function() {});
+          }
 
           var monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
           var mLabel = (monthNames[parseInt(month, 10)] || ('Bulan ' + month)) + ' ' + year;

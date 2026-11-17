@@ -406,7 +406,18 @@
       window.location.replace('./share.html');
     }
 
-    // Deteksi cerdas: Jika ada share berkas baru di IndexedDB (< 60 detik lalu), alihkan langsung ke share.html
+    // Deteksi cerdas: Jika ada share berkas baru di Cache Storage atau IndexedDB, alihkan langsung ke share.html
+    if ('caches' in window) {
+      caches.open('kypo-shared-files').then(function(c) {
+        return c.keys();
+      }).then(function(keys) {
+        if (keys && keys.length > 0) {
+          if (splash) splash.classList.add('hidden');
+          window.location.replace('./share.html');
+        }
+      }).catch(function() {});
+    }
+
     try {
       var reqShareCheck = indexedDB.open('kypo_share_db', 1);
       reqShareCheck.onsuccess = function(ev) {

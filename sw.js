@@ -1,7 +1,7 @@
-// Service Worker untuk KYPO PWA Wrapper (v6)
-// Menangani caching, penangkapan berkas multipart Android Share Target, dan injeksi instan ke share.html
+// Service Worker untuk KYPO PWA Wrapper (v7)
+// Menangani caching, streaming berkas share target ke Cache API (zero-memory overhead), dan penyajian instan share.html
 
-var CACHE_NAME = 'kypo-cache-v6';
+var CACHE_NAME = 'kypo-cache-v7';
 var PRECACHE_FILES = [
   './share.html',
   './index.html',
@@ -28,7 +28,7 @@ self.addEventListener('activate', function(event) {
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME && cacheName !== 'kypo-share-payload') {
+          if (cacheName !== CACHE_NAME && cacheName !== 'kypo-shared-files') {
             console.log('[KYPO SW] Menghapus cache usang:', cacheName);
             return caches.delete(cacheName);
           }
@@ -39,18 +39,6 @@ self.addEventListener('activate', function(event) {
     })
   );
 });
-
-// Helper aman konversi ArrayBuffer ke Base64 per chunk (menghindari stack overflow)
-function arrayBufferToBase64(buffer) {
-  var bytes = new Uint8Array(buffer);
-  var len = bytes.byteLength;
-  var binary = '';
-  var chunkSize = 0x8000; // 32KB per chunk
-  for (var i = 0; i < len; i += chunkSize) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
-  }
-  return btoa(binary);
-}
 
 self.addEventListener('fetch', function(event) {
   var req = event.request;
@@ -66,7 +54,7 @@ self.addEventListener('fetch', function(event) {
       try {
         var formData = await req.formData();
         
-        // 1. Ekstrak berkas dari seluruh kemungkinan nama field Android Share Target
+        // 1. Ekstrak berkas dari seluruh kemungkinan nama field Android
         var possibleKeys = ['files', 'file', 'media', 'photos', 'shared_files', 'files[]'];
         for (var k of possibleKeys) {
           var list = formData.getAll(k);
@@ -79,7 +67,7 @@ self.addEventListener('fetch', function(event) {
           }
         }
 
-        // 2. Jika belum ditemukan, periksa seluruh pasangan key-value di formData
+        // 2. Jika belum ditemukan, periksa seluruh entri formData
         if (files.length === 0) {
           for (var entry of formData.entries()) {
             var val = entry[1];
@@ -92,85 +80,61 @@ self.addEventListener('fetch', function(event) {
         title = formData.get('title') || '';
         text = formData.get('text') || '';
       } catch (errForm) {
-        console.error('[KYPO SW] Gagal parse formData share target:', errForm);
+        console.error('[KYPO SW] Gagal membaca formData:', errForm);
       }
 
-      // 3. Konversi seluruh berkas ke format aman Base64 & Data URL
-      var safeFiles = [];
-      if (files && files.length > 0) {
-        for (var i = 0; i < files.length; i++) {
-          var f = files[i];
-          try {
-            var buf = await f.arrayBuffer();
-            var b64 = arrayBufferToBase64(buf);
-            var mime = f.type || 'application/octet-stream';
-            var dUrl = 'data:' + mime + ';base64,' + b64;
-            safeFiles.push({
-              name: f.name || ('Lampiran_Share_' + (i + 1) + (mime.includes('pdf') ? '.pdf' : '.jpg')),
-              type: mime,
-              size: f.size || buf.byteLength,
-              base64: b64,
-              dataUrl: dUrl
-            });
-          } catch(eBuf) {
-            console.error('[KYPO SW] Gagal konversi arrayBuffer ke base64:', eBuf);
-          }
+      // 3. Simpan berkas langsung ke Cache Storage 'kypo-shared-files' (Streaming murni, bebas OOM)
+      try {
+        var shareCache = await caches.open('kypo-shared-files');
+        // Bersihkan berkas lama
+        var oldKeys = await shareCache.keys();
+        for (var oldK of oldKeys) {
+          await shareCache.delete(oldK);
         }
+
+        for (var i = 0; i < files.length; i++) {
+          var fileItem = files[i];
+          var fName = fileItem.name || ('Lampiran_' + (i + 1) + '.jpg');
+          var fType = fileItem.type || 'application/octet-stream';
+          var reqPath = '/__kypo_shared_file_' + i + '?name=' + encodeURIComponent(fName) + '&type=' + encodeURIComponent(fType) + '&size=' + fileItem.size + '&ts=' + Date.now();
+          
+          await shareCache.put(
+            new Request(reqPath),
+            new Response(fileItem, {
+              headers: {
+                'Content-Type': fType,
+                'X-KYPO-Filename': encodeURIComponent(fName),
+                'X-KYPO-Title': encodeURIComponent(title),
+                'X-KYPO-Text': encodeURIComponent(text),
+                'X-KYPO-Size': String(fileItem.size || 0)
+              }
+            })
+          );
+        }
+      } catch (eCache) {
+        console.error('[KYPO SW] Gagal menyimpan ke Cache Storage:', eCache);
       }
 
-      var sharePayload = {
-        title: title || '',
-        text: text || '',
-        timestamp: Date.now(),
-        files: safeFiles
-      };
-
-      // SALURAN REDUNDAN A: Simpan ke Cache API agar dapat diakses seketika via window.caches
+      // Cadangan ke IndexedDB
       try {
-        var shareCache = await caches.open('kypo-share-payload');
-        await shareCache.put(
-          new Request('/__kypo_latest_share__.json'),
-          new Response(JSON.stringify(sharePayload), {
-            headers: { 'Content-Type': 'application/json' }
-          })
-        );
-      } catch(eCache) {}
+        await saveSharedFilesToIndexedDB(files, title, text);
+      } catch (eIdb) {}
 
-      // SALURAN REDUNDAN B: Simpan ke IndexedDB
-      try {
-        await saveSharedFilesToIndexedDB(safeFiles, title, text);
-      } catch(eIdb) {}
-
-      // SALURAN UTAMA (0ms Latency): Ambil template share.html dan INJEKSIKAN payload langsung ke HTML!
-      var targetHtml = '';
+      // 4. Langsung layani share.html dengan status 200 OK dari cache (sangat ringan, <5ms)
       try {
         var cached = await caches.match('./share.html');
         if (cached) {
-          targetHtml = await cached.text();
-        } else {
-          var netRes = await fetch('./share.html');
-          if (netRes && netRes.ok) {
-            targetHtml = await netRes.text();
-          }
+          return cached.clone();
         }
-      } catch(eFetch) {}
-
-      if (targetHtml) {
-        // Injeksi data berkas langsung ke dalam variabel global di header share.html
-        var injectionScript = '<script id="kypo-injected-data">window.__KYPO_INJECTED_SHARE__ = ' + JSON.stringify(sharePayload) + ';<\/script>';
-        if (targetHtml.includes('</head>')) {
-          targetHtml = targetHtml.replace('</head>', injectionScript + '</head>');
-        } else {
-          targetHtml = injectionScript + targetHtml;
+        var netRes = await fetch('./share.html');
+        if (netRes && netRes.ok) {
+          return netRes;
         }
-
-        return new Response(targetHtml, {
-          status: 200,
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
+      } catch (eServe) {
+        console.warn('[KYPO SW] Serve share.html error:', eServe);
       }
 
-      // Fallback redirect jika pengambilan template gagal
+      // Fallback redirect
       var targetUrl = new URL('share.html', self.location.href).href;
       return new Response(
         '<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=' + targetUrl + '"></head><body><script>location.replace("' + targetUrl + '");<\/script></body></html>',
@@ -221,10 +185,20 @@ function saveSharedFilesToIndexedDB(files, title, text) {
         var tx = db.transaction('shared_files', 'readwrite');
         var store = tx.objectStore('shared_files');
         
+        var safeList = [];
+        for (var i = 0; i < files.length; i++) {
+          var f = files[i];
+          safeList.push({
+            name: f.name || ('Lampiran_' + (i + 1) + '.jpg'),
+            type: f.type || 'application/octet-stream',
+            size: f.size || 0
+          });
+        }
+
         store.put({
           id: 'latest_share',
           timestamp: Date.now(),
-          files: files,
+          files: safeList,
           title: title || '',
           text: text || ''
         });
