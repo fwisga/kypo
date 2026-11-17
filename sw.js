@@ -1,7 +1,7 @@
-// Service Worker untuk KYPO PWA Wrapper (v5)
-// Menangani caching dan penangkapan Web Share Target API dari HP Android secara langsung tanpa redirect 303 yang rentan macet
+// Service Worker untuk KYPO PWA Wrapper (v6)
+// Menangani caching, penangkapan berkas multipart Android Share Target, dan injeksi instan ke share.html
 
-var CACHE_NAME = 'kypo-cache-v5';
+var CACHE_NAME = 'kypo-cache-v6';
 var PRECACHE_FILES = [
   './share.html',
   './index.html',
@@ -28,7 +28,7 @@ self.addEventListener('activate', function(event) {
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== 'kypo-share-payload') {
             console.log('[KYPO SW] Menghapus cache usang:', cacheName);
             return caches.delete(cacheName);
           }
@@ -40,6 +40,18 @@ self.addEventListener('activate', function(event) {
   );
 });
 
+// Helper aman konversi ArrayBuffer ke Base64 per chunk (menghindari stack overflow)
+function arrayBufferToBase64(buffer) {
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+  var binary = '';
+  var chunkSize = 0x8000; // 32KB per chunk
+  for (var i = 0; i < len; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
+  }
+  return btoa(binary);
+}
+
 self.addEventListener('fetch', function(event) {
   var req = event.request;
   var url = new URL(req.url);
@@ -47,77 +59,118 @@ self.addEventListener('fetch', function(event) {
   // Tangkap request HTTP POST dari Web Share Target Android
   if (req.method === 'POST') {
     event.respondWith((async function() {
+      var files = [];
+      var title = '';
+      var text = '';
+
       try {
         var formData = await req.formData();
-        var files = formData.getAll('files');
-        if (!files || files.length === 0) {
-          files = formData.getAll('shared_files');
+        
+        // 1. Ekstrak berkas dari seluruh kemungkinan nama field Android Share Target
+        var possibleKeys = ['files', 'file', 'media', 'photos', 'shared_files', 'files[]'];
+        for (var k of possibleKeys) {
+          var list = formData.getAll(k);
+          if (list && list.length > 0) {
+            for (var f of list) {
+              if (f && (f.size > 0 || f.name || f instanceof Blob || (typeof File !== 'undefined' && f instanceof File))) {
+                files.push(f);
+              }
+            }
+          }
         }
-        if (!files || files.length === 0) {
-          files = [];
+
+        // 2. Jika belum ditemukan, periksa seluruh pasangan key-value di formData
+        if (files.length === 0) {
           for (var entry of formData.entries()) {
             var val = entry[1];
-            if (val && (val instanceof File || val instanceof Blob || (typeof val === 'object' && val.name))) {
+            if (val && typeof val === 'object' && (val.size > 0 || val.name || val instanceof Blob || (typeof File !== 'undefined' && val instanceof File))) {
               files.push(val);
             }
           }
         }
-        var title = formData.get('title') || '';
-        var text = formData.get('text') || '';
-        
-        if (files && files.length > 0) {
-          // Konversi berkas ke struktur aman dengan ArrayBuffer agar tidak detached saat serialisasi IndexedDB
-          var safeFiles = [];
-          for (var i = 0; i < files.length; i++) {
-            var f = files[i];
-            if (f instanceof Blob || f instanceof File) {
-              try {
-                var buf = await f.arrayBuffer();
-                safeFiles.push({
-                  name: f.name || ('Lampiran_Share_' + (i + 1) + '.jpg'),
-                  type: f.type || 'application/octet-stream',
-                  size: f.size || buf.byteLength,
-                  buffer: buf
-                });
-              } catch (eBuf) {
-                safeFiles.push(f);
-              }
-            } else {
-              safeFiles.push(f);
-            }
-          }
-          await saveSharedFilesToIndexedDB(safeFiles, title, text);
-        }
-      } catch (err) {
-        console.error('[KYPO SW] Gagal mengekstrak berkas share target:', err);
+
+        title = formData.get('title') || '';
+        text = formData.get('text') || '';
+      } catch (errForm) {
+        console.error('[KYPO SW] Gagal parse formData share target:', errForm);
       }
-      
-      // SOLUSI UTAMA ANTI-STUCK:
-      // Sajikan halaman share.html langsung dengan status HTTP 200 OK!
-      // Menghindari penggunaan Response.redirect(303) yang pada banyak varian Android WebAPK
-      // sering digagalkan atau dialihkan paksa kembali ke start_url (index.html).
+
+      // 3. Konversi seluruh berkas ke format aman Base64 & Data URL
+      var safeFiles = [];
+      if (files && files.length > 0) {
+        for (var i = 0; i < files.length; i++) {
+          var f = files[i];
+          try {
+            var buf = await f.arrayBuffer();
+            var b64 = arrayBufferToBase64(buf);
+            var mime = f.type || 'application/octet-stream';
+            var dUrl = 'data:' + mime + ';base64,' + b64;
+            safeFiles.push({
+              name: f.name || ('Lampiran_Share_' + (i + 1) + (mime.includes('pdf') ? '.pdf' : '.jpg')),
+              type: mime,
+              size: f.size || buf.byteLength,
+              base64: b64,
+              dataUrl: dUrl
+            });
+          } catch(eBuf) {
+            console.error('[KYPO SW] Gagal konversi arrayBuffer ke base64:', eBuf);
+          }
+        }
+      }
+
+      var sharePayload = {
+        title: title || '',
+        text: text || '',
+        timestamp: Date.now(),
+        files: safeFiles
+      };
+
+      // SALURAN REDUNDAN A: Simpan ke Cache API agar dapat diakses seketika via window.caches
+      try {
+        var shareCache = await caches.open('kypo-share-payload');
+        await shareCache.put(
+          new Request('/__kypo_latest_share__.json'),
+          new Response(JSON.stringify(sharePayload), {
+            headers: { 'Content-Type': 'application/json' }
+          })
+        );
+      } catch(eCache) {}
+
+      // SALURAN REDUNDAN B: Simpan ke IndexedDB
+      try {
+        await saveSharedFilesToIndexedDB(safeFiles, title, text);
+      } catch(eIdb) {}
+
+      // SALURAN UTAMA (0ms Latency): Ambil template share.html dan INJEKSIKAN payload langsung ke HTML!
+      var targetHtml = '';
       try {
         var cached = await caches.match('./share.html');
         if (cached) {
-          var cachedHtml = await cached.text();
-          return new Response(cachedHtml, {
-            status: 200,
-            headers: { 'Content-Type': 'text/html; charset=utf-8' }
-          });
+          targetHtml = await cached.text();
+        } else {
+          var netRes = await fetch('./share.html');
+          if (netRes && netRes.ok) {
+            targetHtml = await netRes.text();
+          }
         }
-        var netRes = await fetch('./share.html');
-        if (netRes && netRes.ok) {
-          var netHtml = await netRes.text();
-          return new Response(netHtml, {
-            status: 200,
-            headers: { 'Content-Type': 'text/html; charset=utf-8' }
-          });
+      } catch(eFetch) {}
+
+      if (targetHtml) {
+        // Injeksi data berkas langsung ke dalam variabel global di header share.html
+        var injectionScript = '<script id="kypo-injected-data">window.__KYPO_INJECTED_SHARE__ = ' + JSON.stringify(sharePayload) + ';<\/script>';
+        if (targetHtml.includes('</head>')) {
+          targetHtml = targetHtml.replace('</head>', injectionScript + '</head>');
+        } else {
+          targetHtml = injectionScript + targetHtml;
         }
-      } catch (eDirect) {
-        console.warn('[KYPO SW] Direct share serve error, fallback to redirect:', eDirect);
+
+        return new Response(targetHtml, {
+          status: 200,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
       }
 
-      // Fallback aman jika direct load gagal: respons HTML auto-replace seketika
+      // Fallback redirect jika pengambilan template gagal
       var targetUrl = new URL('share.html', self.location.href).href;
       return new Response(
         '<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=' + targetUrl + '"></head><body><script>location.replace("' + targetUrl + '");<\/script></body></html>',
@@ -134,7 +187,6 @@ self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(req).then(function(cached) {
       if (cached) {
-        // Ambil dari cache dan update di background (stale-while-revalidate untuk aset lokal)
         fetch(req).then(function(networkRes) {
           if (networkRes && networkRes.status === 200 && req.method === 'GET' && url.origin === self.location.origin) {
             caches.open(CACHE_NAME).then(function(c) { c.put(req, networkRes); });
@@ -144,7 +196,6 @@ self.addEventListener('fetch', function(event) {
       }
       return fetch(req);
     }).catch(function() {
-      // Jika offline dan permintaan berupa dokumen HTML, fallback ke share.html atau index.html
       if (req.mode === 'navigate') {
         return caches.match('./index.html');
       }

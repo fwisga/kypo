@@ -707,7 +707,50 @@
       }
     }
 
-    // Muat Berkas yang Dishare dari IndexedDB dengan Polling Retry Cerdas
+    // Sistem Multi-Saluran Pemuatan Berkas Berbagi
+    function initSharedData() {
+      // SALURAN 1 (0ms Latency): Periksa objek yang diinjeksikan langsung oleh Service Worker
+      if (window.__KYPO_INJECTED_SHARE__ && window.__KYPO_INJECTED_SHARE__.files && window.__KYPO_INJECTED_SHARE__.files.length > 0) {
+        var inj = window.__KYPO_INJECTED_SHARE__;
+        if (inj.title || inj.text) {
+          var uraianEl = document.getElementById('input-uraian');
+          if (uraianEl && !uraianEl.value) {
+            uraianEl.value = (inj.title || inj.text || '').trim();
+          }
+        }
+        processFilesArray(inj.files);
+        return;
+      }
+
+      // SALURAN 2 (Cache API Instan): Periksa payload terbaru yang disimpan Service Worker
+      if ('caches' in window) {
+        caches.open('kypo-share-payload').then(function(c) {
+          return c.match('/__kypo_latest_share__.json');
+        }).then(function(res) {
+          if (res) return res.json();
+          return null;
+        }).then(function(data) {
+          if (data && data.files && data.files.length > 0 && (Date.now() - (data.timestamp || 0)) < 120000) {
+            if (data.title || data.text) {
+              var uraianEl = document.getElementById('input-uraian');
+              if (uraianEl && !uraianEl.value) {
+                uraianEl.value = (data.title || data.text || '').trim();
+              }
+            }
+            processFilesArray(data.files);
+            return;
+          }
+          // Jika belum ada di Cache API, lanjut ke IndexedDB
+          loadSharedFilesFromIndexedDB();
+        }).catch(function() {
+          loadSharedFilesFromIndexedDB();
+        });
+      } else {
+        loadSharedFilesFromIndexedDB();
+      }
+    }
+
+    // SALURAN 3: Muat Berkas yang Dishare dari IndexedDB dengan Polling Retry
     function loadSharedFilesFromIndexedDB() {
       var uraianEl = document.getElementById('input-uraian');
 
@@ -1003,8 +1046,8 @@
       // 3. Muat Sesi User
       initUserSession();
 
-      // 4. Muat Berkas dari IndexedDB
-      loadSharedFilesFromIndexedDB();
+      // 4. Muat Berkas dari Multi-Saluran (Injeksi Langsung / Cache API / IndexedDB)
+      initSharedData();
 
       // 5. Dukungan PWA LaunchQueue jika file dibuka via handler
       if ('launchQueue' in window && window.launchQueue && typeof window.launchQueue.setConsumer === 'function') {
