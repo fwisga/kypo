@@ -1,0 +1,79 @@
+{
+  "name": "KYPO - Buat butir CKP baru",
+  "short_name": "Buat butir CKP baru",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#071e3d",
+  "description": "Kypo - Sistem Informasi Capaian Kinerja Pegawai (CKP) Online BPS Kota Payakumbuh",
+  "orientation": "portrait-primary",
+  "shortcuts": [
+    {
+      "name": "Buat butir CKP baru",
+      "short_name": "Buat butir CKP baru",
+      "description": "Entri butir CKP baru dengan lampiran berkas",
+      "url": "./share.html",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./share.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "image/*",
+            "application/pdf",
+            ".pdf",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".zip",
+            ".rar",
+            ".7z",
+            ".xlsx",
+            ".docx"
+          ]
+        }
+      ]
+    }
+  },
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

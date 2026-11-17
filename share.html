@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Entri Butir CKP - Berkas Berbagi | KYPO BPS Kota Payakumbuh</title>
+  
+  <link rel="icon" href="./favicon.ico">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#071e3d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Font Poppins & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 15%, #071e3d 0%, #030c1d 60%, #020617 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 14px 32px;
+      overflow-x: hidden;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(245, 130, 32, 0.22) 0%, rgba(2, 132, 199, 0.12) 50%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(50px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* Brand Header */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .brand-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
+      margin-bottom: 6px;
+    }
+    .brand-kyp {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+    }
+    @keyframes kypoFlameFlicker {
+      0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 2px 10px rgba(249, 115, 22, 0.55)) brightness(1); }
+      20% { transform: scale(1.05, 0.96) rotate(-1.5deg); filter: drop-shadow(0 4px 16px rgba(245, 158, 11, 0.75)) brightness(1.1); }
+      40% { transform: scale(0.97, 1.04) rotate(1deg); filter: drop-shadow(0 2px 12px rgba(234, 88, 12, 0.6)) brightness(1); }
+      60% { transform: scale(1.04, 0.97) rotate(-0.8deg); filter: drop-shadow(0 4px 18px rgba(249, 115, 22, 0.8)) brightness(1.15); }
+      80% { transform: scale(0.98, 1.03) rotate(1.2deg); filter: drop-shadow(0 2px 14px rgba(245, 158, 11, 0.65)) brightness(1.05); }
+    }
+    .brand-flame {
+      height: 44px;
+      width: auto;
+      object-fit: contain;
+      transform-origin: 50% 88%;
+      animation: kypoFlameFlicker 1.8s ease-in-out infinite;
+      margin-left: -2px;
+    }
+    .brand-tagline {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f59e0b;
+      letter-spacing: 0.02em;
+    }
+    .brand-subtitle {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Badge Khusus Halaman Share */
+    .share-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* User Bar */
+    .user-card {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .user-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Form Card */
+    .form-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 20px 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+      margin-bottom: 18px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 6px;
+    }
+    .form-label .req {
+      color: #f43f5e;
+      margin-left: 2px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px 13px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+    .form-col {
+      flex: 1;
+    }
+
+    /* File Preview List */
+    .file-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .file-preview-card {
+      background: rgba(6, 78, 59, 0.35);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .file-preview-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+    .file-preview-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #34d399;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .file-preview-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .file-preview-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ecfdf5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-preview-meta {
+      font-size: 10px;
+      color: #a7f3d0;
+      margin-top: 2px;
+    }
+    .file-preview-badge {
+      font-size: 9px;
+      font-weight: 800;
+      color: #065f46;
+      background: #a7f3d0;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-top: 3px;
+      display: inline-block;
+    }
+
+    /* Actions */
+    .btn-submit {
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn-submit:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-cancel {
+      width: 100%;
+      padding: 12px 18px;
+      margin-top: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-cancel:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Fullscreen Modal Spinner Overlay */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(2, 6, 23, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #ffffff;
+      transition: opacity 0.3s;
+    }
+    #loading-overlay.hidden {
+      display: none;
+    }
+    .spinner-flame {
+      width: 70px;
+      height: 70px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .spinner-circle {
+      position: absolute;
+      width: 68px;
+      height: 68px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #f59e0b;
+      border-right-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    .loading-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .loading-desc {
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+      max-width: 280px;
+    }
+
+    /* Success / Result Card */
+    #success-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(2, 6, 23, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #success-modal.hidden {
+      display: none;
+    }
+    .success-card {
+      background: #0f172a;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 24px;
+      padding: 28px 20px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      animation: pop 0.25s ease-out;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+    .success-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .success-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    /* Warning Card jika Belum Login */
+    .not-logged-card {
+      background: rgba(120, 53, 15, 0.35);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .not-logged-card i {
+      font-size: 24px;
+      color: #fbbf24;
+      margin-bottom: 8px;
+    }
+    .not-logged-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fef3c7;
+      margin-bottom: 4px;
+    }
+    .not-logged-card p {
+      font-size: 11px;
+      color: #fde68a;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <div class="container">
+    
+    <!-- Brand Header -->
+    <header class="brand-header">
+      <div class="brand-logo-wrap">
+        <img src="./logo-kyp.png" alt="KYP" class="brand-kyp" onerror="this.src='data:image/png;base64,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';">
+        <img src="./logo-flame.png" alt="Flame" class="brand-flame" onerror="this.src='data:image/png;base64,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';">
+      </div>
+      <div class="brand-tagline">Keep your performance on fire!</div>
+      <div class="brand-subtitle">Sistem Informasi CKP BPS Kota Payakumbuh</div>
+      <div class="share-badge">
+        <i class="fa-solid fa-share-nodes"></i> Entri CKP via Berkas Berbagi (Android)
+      </div>
+    </header>
+
+    <!-- Account Card -->
+    <div id="account-container"></div>
+
+    <!-- Form Entri CKP Share -->
+    <form id="share-form" class="form-card" onsubmit="handleShareSubmit(event)">
+      
+      <!-- Periode CKP -->
+      <div class="form-group">
+        <label class="form-label"><i class="fa-regular fa-calendar-check text-amber-400 mr-1"></i> Periode Lembar CKP <span class="req">*</span></label>
+        <div class="form-row">
+          <div class="form-col" style="flex: 1.4;">
+            <select id="input-month" class="form-select" required>
+              <option value="1">Januari</option>
+              <option value="2">Februari</option>
+              <option value="3">Maret</option>
+              <option value="4">April</option>
+              <option value="5">Mei</option>
+              <option value="6">Juni</option>
+              <option value="7">Juli</option>
+              <option value="8">Agustus</option>
+              <option value="9">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+              <option value="12">Desember</option>
+            </select>
+          </div>
+          <div class="form-col" style="flex: 1;">
+            <input type="number" id="input-year" class="form-input" min="2020" max="2035" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Berkas Terlampir dari Share Android -->
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label class="form-label" style="margin-bottom: 0;"><i class="fa-solid fa-paperclip text-emerald-400 mr-1"></i> Berkas Bukti Dukung Terlampir</label>
+          <label for="manual-file-input" style="cursor: pointer; font-size: 11px; font-weight: 600; color: #38bdf8; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(56, 189, 248, 0.12); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 8px;">
+            <i class="fa-solid fa-plus"></i> Tambah Berkas
+          </label>
+          <input type="file" id="manual-file-input" multiple style="display: none;" onchange="handleManualFileSelect(event)">
+        </div>
+        <div id="files-list" class="file-preview-list">
+          <div style="font-size: 11px; color: #94a3b8; text-align: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 10px;">
+            <i class="fa-solid fa-spinner fa-spin mr-1"></i> Memuat berkas dari Android...
+          </div>
+        </div>
+      </div>
+
+      <!-- Uraian Kegiatan -->
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-file-pen text-amber-400 mr-1"></i> Uraian / Deskripsi Kegiatan <span class="req">*</span></label>
+        <textarea id="input-uraian" class="form-textarea" rows="3" placeholder="Tuliskan uraian pekerjaan / kegiatan yang telah dilaksanakan..." required></textarea>
+      </div>
+
+      <!-- Target & Satuan -->
+      <div class="form-group">
+        <div class="form-row">
+          <div class="form-col">
+            <label class="form-label">Target Kuantitas <span class="req">*</span></label>
+            <input type="number" id="input-target" class="form-input" step="any" min="0.01" value="1" required>
+          </div>
+          <div class="form-col">
+            <label class="form-label">Satuan <span class="req">*</span></label>
+            <input type="text" id="input-satuan" class="form-input" value="Kegiatan" placeholder="Kegiatan / Dokumen" required>
+          </div>
+          <div class="form-col">
+            <label class="form-label">Realisasi <span class="req">*</span></label>
+            <input type="number" id="input-realisasi" class="form-input" step="any" min="0" value="1" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tanggal Pelaksanaan -->
+      <div class="form-group">
+        <label class="form-label"><i class="fa-regular fa-clock text-amber-400 mr-1"></i> Tanggal Pelaksanaan Kegiatan</label>
+        <input type="date" id="input-tanggal" class="form-input">
+      </div>
+
+      <!-- Tombol Aksi -->
+      <div style="margin-top: 24px;">
+        <button type="submit" id="btn-submit" class="btn-submit">
+          <i class="fa-solid fa-fire-flame-curved"></i> Simpan ke Lembar CKP
+        </button>
+        <button type="button" class="btn-cancel" onclick="handleCancel()">
+          <i class="fa-solid fa-arrow-left"></i> Batal & Masuk Aplikasi Utama
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+  <!-- Loading Overlay Saat Mengunggah ke Apps Script -->
+  <div id="loading-overlay" class="hidden">
+    <div class="spinner-flame">
+      <div class="spinner-circle"></div>
+      <i class="fa-solid fa-fire-flame-curved" style="color: #f59e0b; font-size: 26px;"></i>
+    </div>
+    <div class="loading-title" id="loading-title">Mengunggah Bukti ke Drive...</div>
+    <div class="loading-desc" id="loading-desc">Menyimpan butir pekerjaan baru ke sistem lembar CKP BPS Kota Payakumbuh</div>
+  </div>
+
+  <!-- Modal Sukses Simpan -->
+  <div id="success-modal" class="hidden">
+    <div class="success-card">
+      <div class="success-icon">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="success-title">Berhasil Disimpan!</h3>
+      <p class="success-desc" id="success-message">Butir kegiatan dan bukti dukung telah berhasil ditambahkan ke lembar CKP bulan berjalan.</p>
+      <div>
+        <button type="button" class="btn-submit" onclick="goToApp()">
+          <i class="fa-solid fa-folder-open"></i> Buka Lembar CKP Saya
+        </button>
+        <button type="button" class="btn-cancel" onclick="closeShareWindow()">
+          <i class="fa-solid fa-xmark"></i> Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL Google Apps Script Web App Resmi
+    var GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzcJytrPKstEr5WVqzaz7v8VsNFXl8hRzVr5WwZjrCd9fZzUCIKi8vvxaYhSj8zx_hY/exec";
+    try {
+      var customGasUrl = localStorage.getItem('KYPO_GAS_URL');
+      if (customGasUrl && customGasUrl.startsWith('http')) {
+        GAS_WEBAPP_URL = customGasUrl;
+      }
+    } catch(eGas) {}
+
+    var sharedFilesPayload = [];
+    var currentUserSession = null;
+    var loadRetries = 0;
+
+    // Helper Format Ukuran File
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      var k = 1024;
+      var sizes = ['B', 'KB', 'MB', 'GB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Hitung Periode Aktif Sistem Resmi
+    function calculateDefaultActivePeriod() {
+      var now = new Date();
+      var currYear = now.getFullYear();
+      var currMonth = now.getMonth() + 1; // 1 - 12
+      var currDate = now.getDate(); // 1 - 31
+
+      var activeMonth, activeYear;
+      if (currDate < 4) {
+        if (currMonth === 1) {
+          activeMonth = 12;
+          activeYear = currYear - 1;
+        } else {
+          activeMonth = currMonth - 1;
+          activeYear = currYear;
+        }
+      } else {
+        activeMonth = currMonth;
+        activeYear = currYear;
+      }
+      return { month: activeMonth, year: activeYear };
+    }
+
+    // Inisialisasi Sesi Pengguna dari LocalStorage
+    function initUserSession() {
+      var accContainer = document.getElementById('account-container');
+      var submitBtn = document.getElementById('btn-submit');
+      
+      try {
+        var str = localStorage.getItem('KYPO_AUTH_SESSION') || localStorage.getItem('CKP_BPS_USER');
+        if (str) {
+          currentUserSession = JSON.parse(str);
+        }
+      } catch(e) {}
+
+      if (currentUserSession && currentUserSession.id) {
+        accContainer.innerHTML = `
+          <div class="user-card">
+            <div class="user-avatar">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="user-info">
+              <div class="user-name">${escapeHtml(currentUserSession.nama || 'Pegawai')}</div>
+              <div class="user-sub">${currentUserSession.nip ? ('NIP. ' + escapeHtml(currentUserSession.nip)) : escapeHtml(currentUserSession.username || '-')} &bull; ${escapeHtml(currentUserSession.jabatan || 'Pegawai')}</div>
+            </div>
+          </div>
+        `;
+        if (submitBtn) submitBtn.disabled = false;
+      } else {
+        accContainer.innerHTML = `
+          <div class="not-logged-card">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <h4>Sesi Login Belum Terdeteksi</h4>
+            <p>Silakan buka aplikasi KYPO dan lakukan login terlebih dahulu agar berkas dapat dihubungkan ke akun Anda.</p>
+            <button type="button" class="btn-cancel" style="margin: 0 auto; max-width: 200px; background: rgba(245, 158, 11, 0.25); color: #fef3c7; border-color: rgba(245, 158, 11, 0.4);" onclick="goToApp()">
+              <i class="fa-solid fa-right-to-bracket mr-1"></i> Login ke KYPO
+            </button>
+          </div>
+        `;
+        if (submitBtn) submitBtn.disabled = true;
+      }
+    }
+
+    // Muat Berkas yang Dishare dari IndexedDB dengan Polling Retry Cerdas
+    function loadSharedFilesFromIndexedDB() {
+      var uraianEl = document.getElementById('input-uraian');
+
+      try {
+        var req = indexedDB.open('kypo_share_db', 1);
+        req.onsuccess = function(ev) {
+          var db = ev.target.result;
+          if (!db.objectStoreNames.contains('shared_files')) {
+            if (loadRetries < 5) {
+              loadRetries++;
+              setTimeout(loadSharedFilesFromIndexedDB, 200);
+              return;
+            }
+            showEmptyFilesFallback();
+            return;
+          }
+          var tx = db.transaction('shared_files', 'readonly');
+          var store = tx.objectStore('shared_files');
+          var getReq = store.get('latest_share');
+          
+          getReq.onsuccess = function() {
+            var record = getReq.result;
+            if (record && record.files && record.files.length > 0) {
+              if (record.title || record.text) {
+                if (uraianEl && !uraianEl.value) {
+                  uraianEl.value = (record.title || record.text || '').trim();
+                }
+              }
+              processFilesArray(record.files);
+            } else if (loadRetries < 5) {
+              loadRetries++;
+              setTimeout(loadSharedFilesFromIndexedDB, 200);
+            } else {
+              showEmptyFilesFallback();
+            }
+          };
+          getReq.onerror = function() {
+            if (loadRetries < 5) {
+              loadRetries++;
+              setTimeout(loadSharedFilesFromIndexedDB, 200);
+            } else {
+              showEmptyFilesFallback();
+            }
+          };
+        };
+        req.onerror = function() {
+          if (loadRetries < 5) {
+            loadRetries++;
+            setTimeout(loadSharedFilesFromIndexedDB, 200);
+          } else {
+            showEmptyFilesFallback();
+          }
+        };
+      } catch(e) {
+        showEmptyFilesFallback();
+      }
+    }
+
+    function handleManualFileSelect(event) {
+      var input = event.target;
+      if (input.files && input.files.length > 0) {
+        var selected = Array.from(input.files);
+        processFilesArray(selected, true);
+      }
+    }
+
+    function showEmptyFilesFallback() {
+      var filesListEl = document.getElementById('files-list');
+      if (filesListEl) {
+        filesListEl.innerHTML = `
+          <div style="font-size: 11px; color: #cbd5e1; text-align: center; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-file-circle-exclamation text-amber-400 text-lg mb-1 block"></i>
+            Tidak ada berkas yang sedang dibagikan.<br>
+            <span style="font-size: 10px; color: #94a3b8;">Buka menu Bagikan pada galeri/berkas HP Anda dan pilih aplikasi KYPO.</span>
+          </div>
+        `;
+      }
+    }
+
+    // Konversi Berkas ke Base64 Data URL & Tampilkan Pratinjau
+    function processFilesArray(files, isAppend) {
+      var filesListEl = document.getElementById('files-list');
+      if (!filesListEl) return;
+      if (!isAppend) {
+        filesListEl.innerHTML = '';
+        sharedFilesPayload = [];
+      } else {
+        // Hapus kartu pesan kosong jika ada
+        var emptyFallback = filesListEl.querySelector('.file-preview-card') ? null : filesListEl.firstElementChild;
+        if (emptyFallback && !emptyFallback.classList.contains('file-preview-card')) {
+          filesListEl.innerHTML = '';
+        }
+      }
+
+      function addCardToUI(fName, fType, fSize, base64Part, dataUrl) {
+        sharedFilesPayload.push({
+          fileName: fName,
+          mimeType: fType,
+          base64: base64Part,
+          size: fSize,
+          dataUrl: dataUrl
+        });
+
+        var isImg = fType.startsWith('image/');
+        var card = document.createElement('div');
+        card.className = 'file-preview-card';
+
+        var mediaHtml = isImg
+          ? `<img src="${dataUrl}" class="file-preview-thumb" alt="Preview">`
+          : `<div class="file-preview-icon"><i class="fa-solid ${fType.includes('pdf') ? 'fa-file-pdf' : 'fa-file-lines'}"></i></div>`;
+
+        card.innerHTML = `
+          ${mediaHtml}
+          <div class="file-preview-info">
+            <div class="file-preview-name">${escapeHtml(fName)}</div>
+            <div class="file-preview-meta">${escapeHtml(fType)} &bull; ${formatBytes(fSize)}</div>
+            <span class="file-preview-badge"><i class="fa-solid fa-check mr-0.5"></i> Terlampir dari Android</span>
+          </div>
+        `;
+        filesListEl.appendChild(card);
+      }
+
+      files.forEach(function(file, idx) {
+        var fName = file.name || file.fileName || ('Lampiran_Share_' + (idx + 1) + '.jpg');
+        var fType = file.type || file.mimeType || 'application/octet-stream';
+        var fSize = file.size || 0;
+
+        var blob = null;
+        if (file instanceof Blob || file instanceof File) {
+          blob = file;
+        } else if (file.buffer) {
+          try {
+            blob = new Blob([file.buffer], { type: fType });
+          } catch(eB) {}
+        } else if (file.dataUrl || file.base64) {
+          var dataUrl = file.dataUrl || ('data:' + fType + ';base64,' + file.base64);
+          var base64Part = file.base64 || (dataUrl.split('base64,')[1] || '');
+          addCardToUI(fName, fType, fSize, base64Part, dataUrl);
+          return;
+        }
+
+        if (blob) {
+          var r = new FileReader();
+          r.onload = function(re) {
+            var dataUrl = re.target.result;
+            var base64Part = dataUrl.indexOf('base64,') > -1 ? dataUrl.split('base64,')[1] : '';
+            addCardToUI(fName, fType, blob.size || fSize, base64Part, dataUrl);
+          };
+          r.readAsDataURL(blob);
+        }
+      });
+    }
+
+    // Handler Submit Form ke Google Apps Script (doPost)
+    async function handleShareSubmit(event) {
+      event.preventDefault();
+
+      if (!currentUserSession || !currentUserSession.id) {
+        alert('Sesi login tidak terdeteksi. Silakan buka aplikasi KYPO terlebih dahulu.');
+        return;
+      }
+
+      var month = document.getElementById('input-month').value;
+      var year = document.getElementById('input-year').value;
+      var uraian = document.getElementById('input-uraian').value;
+      var target = document.getElementById('input-target').value;
+      var satuan = document.getElementById('input-satuan').value;
+      var realisasi = document.getElementById('input-realisasi').value;
+      var tanggal = document.getElementById('input-tanggal').value;
+
+      if (!uraian || !uraian.trim()) {
+        alert('Deskripsi / Uraian kegiatan wajib diisi.');
+        return;
+      }
+
+      var overlay = document.getElementById('loading-overlay');
+      var loadTitle = document.getElementById('loading-title');
+      var loadDesc = document.getElementById('loading-desc');
+      if (overlay) overlay.classList.remove('hidden');
+
+      if (sharedFilesPayload && sharedFilesPayload.length > 0) {
+        if (loadTitle) loadTitle.innerText = 'Mengunggah Bukti ke Drive...';
+        if (loadDesc) loadDesc.innerText = 'Membuat folder bukti dukung & mengunggah ' + sharedFilesPayload.length + ' berkas...';
+      } else {
+        if (loadTitle) loadTitle.innerText = 'Menyimpan Butir CKP...';
+        if (loadDesc) loadDesc.innerText = 'Menyimpan butir kegiatan ke lembar periode...';
+      }
+
+      var payload = {
+        action: 'shareTargetSubmitItem',
+        userId: currentUserSession.id,
+        user: currentUserSession,
+        month: parseInt(month, 10),
+        year: parseInt(year, 10),
+        uraian: uraian.trim(),
+        target: parseFloat(target) || 1,
+        satuan: satuan.trim() || 'Kegiatan',
+        realisasi: parseFloat(realisasi) || 1,
+        tanggal: tanggal || '',
+        files: sharedFilesPayload.map(function(f) {
+          return {
+            fileName: f.fileName,
+            mimeType: f.mimeType,
+            base64: f.base64
+          };
+        })
+      };
+
+      try {
+        // Kirim HTTP POST ke Google Apps Script Web App tanpa preflight OPTIONS
+        var response = await fetch(GAS_WEBAPP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        var res = await response.json();
+
+        if (overlay) overlay.classList.add('hidden');
+
+        if (res && res.success) {
+          // Bersihkan cache IndexedDB setelah berhasil disimpan
+          try {
+            var req = indexedDB.open('kypo_share_db', 1);
+            req.onsuccess = function(ev) {
+              var db = ev.target.result;
+              if (db.objectStoreNames.contains('shared_files')) {
+                var tx = db.transaction('shared_files', 'readwrite');
+                tx.objectStore('shared_files').delete('latest_share');
+              }
+            };
+          } catch(eDel) {}
+
+          var monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+          var mLabel = (monthNames[parseInt(month, 10)] || ('Bulan ' + month)) + ' ' + year;
+          var succMsg = document.getElementById('success-message');
+          if (succMsg) {
+            succMsg.innerText = 'Butir kegiatan "' + uraian + '" berhasil ditambahkan ke lembar CKP ' + mLabel + ' dengan bukti dukung terlampir di Google Drive.';
+          }
+
+          var successModal = document.getElementById('success-modal');
+          if (successModal) successModal.classList.remove('hidden');
+
+        } else {
+          alert('Gagal Menyimpan: ' + ((res && res.message) ? res.message : 'Terjadi kesalahan sistem saat menyimpan butir CKP.'));
+        }
+
+      } catch (err) {
+        if (overlay) overlay.classList.add('hidden');
+        console.error('Error saat submit share target:', err);
+        alert('Terjadi kesalahan koneksi saat mengirim data ke Google Apps Script: ' + err.message + '\n\nSilakan coba lagi beberapa saat lagi.');
+      }
+    }
+
+    function handleCancel() {
+      goToApp();
+    }
+
+    function goToApp() {
+      window.location.href = './index.html';
+    }
+
+    function closeShareWindow() {
+      try {
+        window.close();
+      } catch(e) {}
+      setTimeout(function() {
+        goToApp();
+      }, 100);
+    }
+
+    // Inisialisasi Halaman
+    window.addEventListener('DOMContentLoaded', function() {
+      // 1. Set default Periode Aktif
+      var act = calculateDefaultActivePeriod();
+      var selM = document.getElementById('input-month');
+      var inpY = document.getElementById('input-year');
+      if (selM) selM.value = String(act.month);
+      if (inpY) inpY.value = String(act.year);
+
+      // 2. Set default Tanggal Hari Ini
+      var inpTgl = document.getElementById('input-tanggal');
+      if (inpTgl) {
+        var today = new Date();
+        var yyyy = today.getFullYear();
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var dd = String(today.getDate()).padStart(2, '0');
+        inpTgl.value = yyyy + '-' + mm + '-' + dd;
+      }
+
+      // 3. Muat Sesi User
+      initUserSession();
+
+      // 4. Muat Berkas dari IndexedDB
+      loadSharedFilesFromIndexedDB();
+
+      // 5. Dukungan PWA LaunchQueue jika file dibuka via handler
+      if ('launchQueue' in window && window.launchQueue && typeof window.launchQueue.setConsumer === 'function') {
+        try {
+          window.launchQueue.setConsumer(function(launchParams) {
+            if (!launchParams || !launchParams.files || !launchParams.files.length) return;
+            Promise.all(launchParams.files.map(function(handle) { return handle.getFile(); }))
+              .then(function(files) {
+                if (files && files.length > 0) {
+                  processFilesArray(files);
+                }
+              })
+              .catch(function() {});
+          });
+        } catch(eLQ) {}
+      }
+
+      // 6. Registrasi Service Worker di share.html
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(function() {});
+      }
+    });
+  </script>
+</body>
+</html>
